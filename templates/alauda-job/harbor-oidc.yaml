@@ -1,0 +1,56 @@
+{{- if eq (include "harbor.auth.enable" .) "true" }}
+{{- if eq (include "harbor.auth.oidcmode" .)  "oidc_auth" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "harbor.oidc.jobname" . }}
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      containers:
+        - name: devops-cli
+          image: {{ .Values.global.registry.address }}/{{ .Values.global.images.devopsCLI.repository }}:{{ .Values.global.images.devopsCLI.tag }}
+          command:
+          - "acp"
+          - "harbor"
+          - "config"
+          - "--url"
+          - "{{ template "harbor.auth.harborUrl" . }}"
+          - "--username"
+          - "admin"
+          - "--password"
+          {{- if .Values.harborAdminPasswordRef }}
+          - "$(HARBOR_ADMIN_PASSWORD)"
+          {{- else }}
+          - "{{ .Values.harborAdminPassword }}"
+          {{- end }}
+          {{- if not (and (eq .Values.expose.type "ingress") (or .Values.expose.tls.enabled $.Values.global.globalTLSSecretName)) }}
+          - --scheme
+          - http
+          {{- end }}
+          - "--update"
+          - "--json"
+          - "{\"auth_mode\":\"oidc_auth\",\"oidc_client_id\":\"{{ template "harbor.auth.clientId" . }}\",\"oidc_client_secret\":\"{{ template "harbor.auth.clientsecret" . }}\",\"oidc_endpoint\":\"{{ template "harbor.auth.issuer" . }}\",\"oidc_name\":\"{{ template "harbor.auth.oidcName" . }}\",\"oidc_scope\":\"{{ template "harbor.auth.oidcScope" . }}\",\"oidc_verify_cert\":{{- if eq (include "harbor.auth.oidcVerifyCert" .)  "true" }}true{{- else -}}false{{- end }}}"
+          - "-k"
+          envFrom:
+{{- if .Values.harborAdminPasswordRef }}
+          - secretRef:
+              name: {{ .Values.harborAdminPasswordRef }}
+{{- end }}
+      restartPolicy: OnFailure
+    {{- with .Values.core.tolerations }}
+      tolerations:
+{{ toYaml . | indent 6 }}
+    {{- end }}
+    {{- with .Values.core.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.core.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+  backoffLimit: 400
+{{- end }}
+{{- end }}

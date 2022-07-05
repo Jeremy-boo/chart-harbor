@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "harbor.core" . }}-migrate
+spec:
+  template:
+    spec:
+      containers:
+        - name: {{ template "harbor.core" . }}-migrate
+          image: {{ .Values.global.registry.address }}/{{ .Values.global.images.migrator.repository }}:{{ .Values.global.images.migrator.tag }}
+          command: ['sh','-c','/bin/harbor-migrator migrate']
+          envFrom:
+          - configMapRef:
+              name: "{{ template "harbor.core" . }}"
+          - secretRef:
+              name: "{{ template "harbor.core" . }}"
+          env:
+          - name: CONCURRENCY_NO
+            value: "5"
+          - name: POSTGRESQL_CONN_TIMEOUT
+            value: "300"
+      restartPolicy: Never
+    {{- with .Values.core.tolerations }}
+      tolerations:
+{{ toYaml . | indent 6 }}
+    {{- end }}
+    {{- with .Values.core.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+  {{- end }}
+    {{- with .Values.core.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+  {{- end }}
+  backoffLimit: 5

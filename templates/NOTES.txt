@@ -1,0 +1,10 @@
+Please wait for several minutes for Harbor deployment to complete.
+Then you should be able to visit the Harbor portal at {{ .Values.externalURL }}.
+For more details, please visit https://github.com/goharbor/harbor.
+
+{{- if eq (include "harbor.auth.enable" .) "true" }}
+{{- if eq ( include "harbor.auth.clientId" .)  "oidc_auth" }}
+The auth mode of harbor is oidc now. Please put below address into dex configmap:
+{{ .Values.externalURL }}/c/oidc/callback
+{{- end }}
+{{- end }}

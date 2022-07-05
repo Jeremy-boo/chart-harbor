@@ -1,0 +1,145 @@
+{{- if eq .Values.redis.type "internal" -}}
+{{- $redis := .Values.persistence.persistentVolumeClaim.redis -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "harbor.redis" . }}
+  labels:
+{{ include "harbor.labels" . | indent 4 }}
+    component: redis
+spec:
+  replicas: 1
+  serviceName: {{ template "harbor.redis" . }}
+  {{- if .Values.global.statefulset.redis.podManagementPolicy }}
+  podManagementPolicy: {{ .Values.global.statefulset.redis.podManagementPolicy }}
+  {{- end }}
+  selector:
+    matchLabels:
+{{ include "harbor.matchLabels" . | indent 6 }}
+      component: redis
+  template:
+    metadata:
+      labels:
+{{ include "harbor.labels" . | indent 8 }}
+        component: redis
+        service_name: harbor
+        {{ .Values.global.labelBaseDomain }}/product: "DevOps"
+{{- if .Values.redis.podAnnotations }}
+      annotations:
+{{ toYaml .Values.redis.podAnnotations | indent 8 }}
+{{- end }}
+    spec:
+      securityContext:
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+{{- if .Values.redis.internal.serviceAccountName }}
+      serviceAccountName: {{ .Values.redis.internal.serviceAccountName }}
+{{- end -}}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      automountServiceAccountToken: false
+      initContainers:
+      - name: "change-permission"
+        image: {{ .Values.global.registry.address }}/{{ .Values.global.images.initContainer.repository }}:{{ .Values.global.images.initContainer.tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        securityContext:
+          runAsUser: 0
+        command: ["/bin/sh"]
+        args: ["-c", "mkdir -p /data/{{ $redis.subPath }} && chown -R 999:999 /data/{{ $redis.subPath }}"]
+        volumeMounts:
+          - name: data
+            mountPath: /data
+            subPath: {{ $redis.subPath }}
+      containers:
+      - name: redis
+        image: {{ .Values.global.registry.address }}/{{ .Values.global.images.redis.repository }}:{{ .Values.global.images.redis.tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        env:
+        {{- if .Values.redis.internal.usePassword }}
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "harbor.redis" . }}
+              key: redis-password
+        {{- else }}
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        {{- end }}
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 300
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 1
+          periodSeconds: 10
+{{- if .Values.redis.internal.resources }}
+        resources:
+{{ toYaml .Values.redis.internal.resources | indent 10 }}
+{{- end }}
+        volumeMounts:
+        - name: data
+          mountPath: /data
+          subPath: {{ $redis.subPath }}
+      {{- if and .Values.persistence.enabled ($redis.existingClaim)}}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ $redis.existingClaim | quote }}
+      {{- else }}
+      {{- if and (.Values.persistence.hostPath.redis.host.nodeName) (.Values.persistence.hostPath.redis.host.path) }}
+      volumes:
+      - name: data
+        hostPath:
+          path: {{ .Values.persistence.hostPath.redis.host.path }}
+          type: DirectoryOrCreate
+      {{- else }}
+      volumes:
+      - name: data
+        emptyDir: {}
+      {{- end }}
+      {{- end }}
+    {{- if .Values.redis.internal.nodeSelector }}
+    {{- with .Values.redis.internal.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- else }}
+    {{- if .Values.persistence.hostPath.redis.host.nodeName }}
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.persistence.hostPath.redis.host.nodeName }}
+    {{- end }}
+    {{- end }}
+    {{- with .Values.redis.internal.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.redis.internal.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+  {{- if and .Values.persistence.enabled (not $redis.existingClaim) }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+{{ include "harbor.labels" . | indent 8 }}
+    spec:
+      accessModes: [{{ $redis.accessMode | quote }}]
+      {{- if $redis.storageClass }}
+      {{- if (eq "-" $redis.storageClass) }}
+      storageClassName: ""
+      {{- else }}
+      storageClassName: "{{ $redis.storageClass }}"
+      {{- end }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ $redis.size | quote }}
+  {{- end -}}
+  {{- end -}}

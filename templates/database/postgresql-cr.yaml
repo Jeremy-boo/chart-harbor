@@ -1,0 +1,35 @@
+{{- if .Values.highAvailability.enable -}}
+{{- if eq .Values.database.type "external" -}}
+apiVersion: acid.zalan.do/v1
+kind: postgresql
+metadata:
+  # name must use team id as prefix.
+  name: "harbor-{{ template "harbor.release" . }}-pg"
+  labels:
+{{ include "harbor.labels" . | indent 4 }}
+spec:
+  databases:
+    {{ .Values.database.external.coreDatabase }}: {{ .Values.database.external.username }}
+    {{ .Values.database.external.notaryServerDatabase }}: {{ .Values.database.external.username }}
+    {{ .Values.database.external.notarySignerDatabase }}: {{ .Values.database.external.username }}
+  enableExporter: true
+  numberOfInstances: 2
+  postgresql:
+    parameters:
+      max_connections: '{{ .Values.database.maxOpenConns }}'
+      log_directory: /var/log/pg_log
+    version: '10'
+  teamId: harbor
+  users:
+    {{ .Values.database.external.username }}:
+      - superuser
+      - createdb
+  usersCustomizedPasswd:
+    {{ .Values.database.external.username }}: {{ .Values.database.external.password }}
+  enablePgpool2: false
+  volume:
+    size: 10Gi
+  resources:
+{{ toYaml .Values.database.internal.resources | indent 4 }}
+{{- end -}}
+{{- end -}}

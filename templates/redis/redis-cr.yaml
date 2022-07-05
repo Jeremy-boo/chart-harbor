@@ -1,0 +1,38 @@
+{{- if .Values.highAvailability.enable -}}
+{{- if eq .Values.redis.type "external" -}}
+apiVersion: databases.spotahome.com/v1
+kind: RedisFailover
+metadata:
+  # name must use team id as prefix.
+  name: "harbor-{{ template "harbor.release" . }}-redis"
+  labels:
+{{ include "harbor.labels" . | indent 4 }}
+spec:
+  redis:
+    replicas: 3
+  {{- with .Values.redis.external.tolerations }}
+    tolerations:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+  {{- with .Values.redis.external.nodeSelector }}
+    nodeSelector:
+{{ toYaml . | indent 6 }}
+  {{- end }}
+    storage:
+      keepAfterDeletion: true
+    resources:
+{{ toYaml .Values.redis.internal.resources | indent 6 }}
+    exporter:
+      enabled: true
+  sentinel:
+    replicas: 3
+  {{- with .Values.redis.external.tolerations }}
+    tolerations:
+{{ toYaml . | indent 4 }}
+  {{- end }}
+  {{- with .Values.redis.external.nodeSelector }}
+    nodeSelector:
+{{ toYaml . | indent 6 }}
+  {{- end }}
+{{- end -}}
+{{- end -}}

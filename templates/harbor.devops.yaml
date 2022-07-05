@@ -1,0 +1,12 @@
+{{- if .Values.AlaudaACP.Enabled }}
+apiVersion: devops.alauda.io/v1alpha1
+kind: ImageRegistry
+metadata:
+  name: {{ .Values.AlaudaACP.Name }}
+  labels:
+{{ include "harbor.labels" . | indent 4 }}
+spec:
+  type: Harbor
+  http:
+    host: {{ .Values.externalURL }}
+{{- end }}

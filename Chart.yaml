@@ -1,0 +1,23 @@
+apiVersion: v2
+name: harbor
+version: v3.9.0-alpha.15
+appVersion: 2.2.3.1
+description: An open source trusted cloud native registry that stores, signs, and scans content
+keywords:
+  - docker
+  - registry
+  - harbor
+home: https://goharbor.io
+icon: https://raw.githubusercontent.com/goharbor/harbor/master/docs/img/harbor_logo.png
+sources:
+  - https://github.com/goharbor/harbor
+  - https://github.com/goharbor/harbor-helm
+maintainers:
+  - name: Wenkai Yin
+    email: yinw@vmware.com
+  - name: Weiwei He
+    email: hweiwei@vmware.com
+engine: gotpl
+annotations:
+  release: alpha
+  branch: master
