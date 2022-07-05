@@ -1,0 +1,124 @@
+expose:
+  type: nodePort
+  tls:
+    enabled: false
+  nodePort:
+    ports:
+      http:
+        nodePort: 30004
+      https:
+        nodePort: 30005
+      notary:
+        nodePort: 30006
+externalURL: http://192.168.178.84:30004
+
+persistence:
+  persistentVolumeClaim:
+    chartmuseum:
+      existingClaim: "dev"
+      subPath: chartmuseum
+    database:
+      existingClaim: "dev"
+      subPath: database
+    jobservice:
+      existingClaim: "dev"
+      subPath: jobservice
+    redis:
+      existingClaim: "dev"
+      subPath: redis
+    registry:
+      existingClaim: "dev"
+      subPath: registry
+    trivy:
+      existingClaim: "dev"
+      subPath: trivy
+
+nginx:
+  image:
+    repository: registry.alauda.cn:60080/devops/goharbor-nginx-photon
+    tag: alauda-v2.2.3-128
+  replicas: 2
+  
+portal:
+  image:
+    repository: registry.alauda.cn:60080/devops/goharbor-harbor-portal
+    tag: alauda-v2.2.3-128
+  replicas: 2
+
+core:
+  image:
+    repository: registry.alauda.cn:60080/devops/goharbor-harbor-core
+    tag: alauda-v2.2.3-128
+  replicas: 2
+  ## Startup probe values
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 10
+ 
+jobservice:
+  image:
+    repository: registry.alauda.cn:60080/devops/goharbor-harbor-jobservice
+    tag: alauda-v2.2.3-128
+  replicas: 2
+  maxJobWorkers: 10
+
+registry:
+  registry:
+    image:
+      repository: registry.alauda.cn:60080/devops/goharbor-registry-photon
+      tag: alauda-v2.2.3-128
+  controller:
+    image:
+      repository: registry.alauda.cn:60080/devops/goharbor-harbor-registryctl
+      tag: alauda-v2.2.3-128
+  replicas: 2
+
+chartmuseum:
+  enabled: true
+  absoluteUrl: false
+  image:
+    repository: registry.alauda.cn:60080/devops/goharbor-chartmuseum-photon
+    tag: alauda-v2.2.3-128
+  replicas: 2
+
+trivy:
+  enabled: true
+  image:
+    repository: registry.alauda.cn:60080/devops/goharbor-trivy-adapter-photon
+    tag: alauda-v2.2.3-128
+  replicas: 2
+
+notary:
+  enabled: true
+  server:
+    image:
+      repository: registry.alauda.cn:60080/devops/goharbor-notary-server-photon
+      tag: alauda-v2.2.3-128
+    replicas: 2
+  signer:
+    image:
+      repository: registry.alauda.cn:60080/devops/goharbor-notary-signer-photon
+      tag: alauda-v2.2.3-128
+    replicas: 2
+
+database:
+  type: external
+  external:
+    host: "harbor-dev-pg"
+    port: "5432"
+    username: "harbor"
+    password: "Harbor12345"
+    sslmode: "require"
+  maxIdleConns: 100
+  maxOpenConns: 900
+
+redis:
+  type: external
+  external:
+    addr: "rfs-harbor-dev-redis:26379"
+    sentinelMasterSet: "mymaster"
+    coreDatabaseIndex: "0"
+    jobserviceDatabaseIndex: "1"
+    registryDatabaseIndex: "2"
+    chartmuseumDatabaseIndex: "3"
+    trivyAdapterIndex: "5"
