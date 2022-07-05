@@ -1,3 +1,6 @@
+global:
+  registry:
+    address: registry.alauda.cn:60080
 expose:
   type: nodePort
   tls:
@@ -34,21 +37,12 @@ persistence:
       subPath: trivy
 
 nginx:
-  image:
-    repository: registry.alauda.cn:60080/devops/goharbor-nginx-photon
-    tag: alauda-v2.2.3-128
   replicas: 2
   
 portal:
-  image:
-    repository: registry.alauda.cn:60080/devops/goharbor-harbor-portal
-    tag: alauda-v2.2.3-128
   replicas: 2
 
 core:
-  image:
-    repository: registry.alauda.cn:60080/devops/goharbor-harbor-core
-    tag: alauda-v2.2.3-128
   replicas: 2
   ## Startup probe values
   startupProbe:
@@ -56,49 +50,26 @@ core:
     initialDelaySeconds: 10
  
 jobservice:
-  image:
-    repository: registry.alauda.cn:60080/devops/goharbor-harbor-jobservice
-    tag: alauda-v2.2.3-128
   replicas: 2
   maxJobWorkers: 10
 
 registry:
-  registry:
-    image:
-      repository: registry.alauda.cn:60080/devops/goharbor-registry-photon
-      tag: alauda-v2.2.3-128
-  controller:
-    image:
-      repository: registry.alauda.cn:60080/devops/goharbor-harbor-registryctl
-      tag: alauda-v2.2.3-128
   replicas: 2
 
 chartmuseum:
   enabled: true
   absoluteUrl: false
-  image:
-    repository: registry.alauda.cn:60080/devops/goharbor-chartmuseum-photon
-    tag: alauda-v2.2.3-128
   replicas: 2
 
 trivy:
   enabled: true
-  image:
-    repository: registry.alauda.cn:60080/devops/goharbor-trivy-adapter-photon
-    tag: alauda-v2.2.3-128
   replicas: 2
 
 notary:
   enabled: true
   server:
-    image:
-      repository: registry.alauda.cn:60080/devops/goharbor-notary-server-photon
-      tag: alauda-v2.2.3-128
     replicas: 2
   signer:
-    image:
-      repository: registry.alauda.cn:60080/devops/goharbor-notary-signer-photon
-      tag: alauda-v2.2.3-128
     replicas: 2
 
 database:
