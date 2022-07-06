@@ -16,24 +16,25 @@ expose:
 externalURL: http://192.168.178.84:30004 # harbor 访问地址
 
 persistence:
+  enabled: true
   persistentVolumeClaim:
     chartmuseum:
       existingClaim: "dev" # pvc 名称，部署的时候更换为自己的pvc名称
       subPath: chartmuseum
     database:
-      existingClaim: "dev"
+      existingClaim: "dev" # pvc 名称，部署的时候更换为自己的pvc名称
       subPath: database
     jobservice:
-      existingClaim: "dev"
+      existingClaim: "dev" # pvc 名称，部署的时候更换为自己的pvc名称
       subPath: jobservice
     redis:
-      existingClaim: "dev"
+      existingClaim: "dev" # pvc 名称，部署的时候更换为自己的pvc名称
       subPath: redis
     registry:
-      existingClaim: "dev"
+      existingClaim: "dev" # pvc 名称，部署的时候更换为自己的pvc名称
       subPath: registry
     trivy:
-      existingClaim: "dev"
+      existingClaim: "dev" # pvc 名称，部署的时候更换为自己的pvc名称
       subPath: trivy
 
 nginx:
@@ -76,9 +77,9 @@ notary:
 database:
   type: external
   external:
-    host: "harbor-dev-pg" # pg访问host(使用postgres-operator部署的为pg service名称)
-    port: "5432" # pg访问端口
-    username: "harbor"  # 创建PG集群指定的 用户名
+    host: "harbor-dev-pg"   # pg访问host(使用postgres-operator部署的为pg service名称)
+    port: "5432"            # pg访问端口
+    username: "harbor"      # 创建PG集群指定的 用户名
     password: "Harbor12345" # 创建pg集群指定的密码
     sslmode: "require"
   maxIdleConns: 100
@@ -89,5 +90,5 @@ redis:
   type: external
   external:
     addr: "rfs-harbor-dev-redis:26379" # redis 哨兵访问地址(redis-operator 部署的redis哨兵集群为 redis service name+26379)
-    sentinelMasterSet: "mymaster"  # redis 哨兵 master name(redis-operator部署的为 mymaster)
-    password: "" # redis 密码设置
+    sentinelMasterSet: "mymaster"      # redis 哨兵 master name(redis-operator部署的为 mymaster)
+    password: ""                       # redis 密码设置
