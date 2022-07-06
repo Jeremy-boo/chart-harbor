@@ -1,6 +1,6 @@
 global:
   registry:
-    address: registry.alauda.cn:60080
+    address: registry.alauda.cn:60080 # 镜像仓库地址，需要替换成自己的镜像仓库地址
 expose:
   type: nodePort
   tls:
@@ -8,17 +8,17 @@ expose:
   nodePort:
     ports:
       http:
-        nodePort: 30004
+        nodePort: 30004 # 服务暴露端口，替换成自己想要暴露的端口
       https:
-        nodePort: 30005
+        nodePort: 30005 # 服务暴露端口，替换成自己想要暴露的端口
       notary:
-        nodePort: 30006
-externalURL: http://192.168.178.84:30004
+        nodePort: 30005 # 服务暴露端口，替换成自己想要暴露的端口
+externalURL: http://192.168.178.84:30004 # harbor 访问地址
 
 persistence:
   persistentVolumeClaim:
     chartmuseum:
-      existingClaim: "dev"
+      existingClaim: "dev" # pvc 名称，部署的时候更换为自己的pvc名称
       subPath: chartmuseum
     database:
       existingClaim: "dev"
@@ -72,24 +72,22 @@ notary:
   signer:
     replicas: 2
 
+# 数据库配置，需要更改为自己的数据库地址
 database:
   type: external
   external:
-    host: "harbor-dev-pg"
-    port: "5432"
-    username: "harbor"
+    host: "harbor-dev-pg" # pg 访问host
+    port: "5432" # pg访问端口
+    username: "harbor"  # root 权限的用户名，根据创建数据库分配的用户名填写
     password: "Harbor12345"
     sslmode: "require"
   maxIdleConns: 100
   maxOpenConns: 900
 
+# 数据库配置，需要更改为自己的数据库地址
 redis:
   type: external
   external:
-    addr: "rfs-harbor-dev-redis:26379"
-    sentinelMasterSet: "mymaster"
-    coreDatabaseIndex: "0"
-    jobserviceDatabaseIndex: "1"
-    registryDatabaseIndex: "2"
-    chartmuseumDatabaseIndex: "3"
-    trivyAdapterIndex: "5"
+    addr: "rfs-harbor-dev-redis:26379" # redis 哨兵访问地址
+    sentinelMasterSet: "mymaster"  # redis 哨兵 master name
+    password: "" # redis 密码设置
